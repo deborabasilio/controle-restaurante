@@ -8,64 +8,48 @@ const supabase = createClient(
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
-
 const GRAPH_URL = `https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`;
 
+const CATEGORIAS = [
+  { id: 'cat_bebida', valor: 'bebida', titulo: 'Bebidas' },
+  { id: 'cat_cerveja', valor: 'cerveja', titulo: 'Cervejas' },
+  { id: 'cat_vinho', valor: 'vinho', titulo: 'Vinhos' },
+];
+
 // ============================================================
-// Handler principal (Vercel chama isso pra GET e POST em /api/whatsapp)
+// Handler principal
 // ============================================================
 module.exports = async (req, res) => {
-  if (req.method === 'GET') {
-    return handleVerification(req, res);
-  }
-  if (req.method === 'POST') {
-    return handleIncomingMessage(req, res);
-  }
+  if (req.method === 'GET') return handleVerification(req, res);
+  if (req.method === 'POST') return handleIncomingMessage(req, res);
   return res.status(405).send('Method not allowed');
 };
 
-// ------------------------------------------------------------
-// Verificação inicial do webhook (a Meta chama isso uma vez,
-// quando você cola a URL nas configurações do app)
-// ------------------------------------------------------------
 function handleVerification(req, res) {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
-
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    return res.status(200).send(challenge);
-  }
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) return res.status(200).send(challenge);
   return res.status(403).send('Verificação falhou');
 }
 
-// ------------------------------------------------------------
-// Mensagem recebida de verdade
-// ------------------------------------------------------------
 async function handleIncomingMessage(req, res) {
   try {
     const entry = req.body?.entry?.[0];
     const change = entry?.changes?.[0]?.value;
     const message = change?.messages?.[0];
+    if (!message) return res.status(200).send('ok'); // status/entrega, ignora
 
-    // A Meta também manda notificações de status (entregue/lido) sem "messages" - ignora
-    if (!message) {
-      return res.status(200).send('ok');
-    }
-
-    const telefone = message.from; // já vem em formato E.164, ex: "5544999999999"
+    const telefone = message.from;
     const texto = extrairTexto(message);
-
-    console.log(`[whatsapp] Mensagem recebida de ${telefone}: type=${message.type} texto="${texto}"`);
+    console.log(`[whatsapp] Mensagem de ${telefone}: type=${message.type} texto="${texto}"`);
 
     await processarMensagem(telefone, texto);
 
     console.log(`[whatsapp] Processamento concluído para ${telefone}`);
-
     return res.status(200).send('ok');
   } catch (err) {
     console.error('[whatsapp] Erro no webhook:', err);
-    // Sempre responde 200 pra Meta não ficar reenviando a mesma mensagem
     return res.status(200).send('erro tratado');
   }
 }
@@ -73,107 +57,201 @@ async function handleIncomingMessage(req, res) {
 function extrairTexto(message) {
   if (message.type === 'text') return message.text.body.trim();
   if (message.type === 'interactive') {
-    const interactive = message.interactive;
-    if (interactive.type === 'list_reply') return interactive.list_reply.id;
-    if (interactive.type === 'button_reply') return interactive.button_reply.id;
+    const i = message.interactive;
+    if (i.type === 'list_reply') return i.list_reply.id;
+    if (i.type === 'button_reply') return i.button_reply.id;
   }
   return '';
 }
 
 // ============================================================
-// Máquina de estados da conversa
+// Máquina de estados
 // ============================================================
 async function processarMensagem(telefone, texto) {
   const conversa = await getConversa(telefone);
   const estado = conversa?.estado || 'inicio';
   const contexto = conversa?.contexto || {};
 
-  if (estado === 'inicio') {
-    return tratarInicio(telefone, texto);
+  switch (estado) {
+    case 'inicio':
+      return tratarInicio(telefone, texto);
+    case 'escolhendo_categoria':
+      return tratarEscolhaCategoria(telefone, texto, contexto);
+    case 'contando_produto':
+      return tratarEscolhaProduto(telefone, texto, contexto);
+    case 'aguardando_quantidade':
+      return tratarQuantidade(telefone, texto, contexto);
+    case 'pos_item':
+      return tratarPosItem(telefone, texto, contexto);
+    default:
+      await resetConversa(telefone);
+      return tratarInicio(telefone, texto);
   }
-  if (estado === 'aguardando_produto') {
-    return tratarEscolhaProduto(telefone, texto, contexto);
-  }
-  if (estado === 'aguardando_quantidade') {
-    return tratarQuantidade(telefone, texto, contexto);
-  }
-
-  // fallback de segurança
-  await resetConversa(telefone);
-  return tratarInicio(telefone, texto);
 }
 
-// ------------------------------------------------------------
-// Estado inicial: reconhece a intenção (pedido ou retirada)
-// ------------------------------------------------------------
 async function tratarInicio(telefone, texto) {
   const t = texto.toLowerCase();
-  const ehPedido = t.includes('pedido') || t === 'menu_pedido';
-  const ehRetirada = t.includes('retir') || t.includes('saiu') || t === 'menu_saida';
-
-  if (!ehPedido && !ehRetirada) {
-    return enviarBotoesMenu(telefone);
-  }
-
-  const tipo = ehPedido ? 'pedido' : 'saida';
-  const produtos = await buscarProdutosAtivos();
-
-  if (produtos.length === 0) {
-    await enviarTexto(telefone, 'Nenhum produto cadastrado ainda. Fala com o gestor pra cadastrar antes.');
+  if (!t.includes('contagem') && !t.includes('pedido')) {
+    await enviarTexto(telefone, 'Oi! Manda "contagem" pra começar a contagem de bebidas da semana. 🍹');
     return;
   }
-
-  await enviarListaProdutos(telefone, produtos, tipo);
-  await setConversa(telefone, 'aguardando_produto', { tipo });
+  await enviarBotoesCategoria(telefone);
+  await setConversa(telefone, 'escolhendo_categoria', { itens: [] });
 }
 
-// ------------------------------------------------------------
-// Estado: aguardando escolha do produto na lista
-// ------------------------------------------------------------
-async function tratarEscolhaProduto(telefone, idProduto, contexto) {
-  if (!idProduto.startsWith('produto_')) {
+async function tratarEscolhaCategoria(telefone, id, contexto) {
+  const categoria = CATEGORIAS.find((c) => c.id === id);
+  if (!categoria) {
+    await enviarTexto(telefone, 'Escolhe uma das opções, por favor 🙂');
+    return;
+  }
+  const { produtos, temMais } = await buscarProdutosPorCategoria(categoria.valor, 0);
+  if (produtos.length === 0) {
+    await enviarTexto(telefone, `Nenhum produto cadastrado em ${categoria.titulo} ainda.`);
+    await enviarBotoesCategoria(telefone);
+    return;
+  }
+  await enviarListaProdutos(telefone, produtos, temMais, categoria.titulo);
+  await setConversa(telefone, 'contando_produto', { ...contexto, categoria: categoria.valor, categoriaTitulo: categoria.titulo, offset: 0 });
+}
+
+async function tratarEscolhaProduto(telefone, id, contexto) {
+  if (id === 'mais_produtos') {
+    const novoOffset = (contexto.offset || 0) + 9;
+    const { produtos, temMais } = await buscarProdutosPorCategoria(contexto.categoria, novoOffset);
+    await enviarListaProdutos(telefone, produtos, temMais, contexto.categoriaTitulo);
+    await setConversa(telefone, 'contando_produto', { ...contexto, offset: novoOffset });
+    return;
+  }
+  if (!id.startsWith('produto_')) {
     await enviarTexto(telefone, 'Escolhe um item da lista, por favor 🙂');
     return;
   }
-
-  const produtoId = idProduto.replace('produto_', '');
-  await enviarTexto(telefone, 'Quantas unidades?');
-  await setConversa(telefone, 'aguardando_quantidade', { ...contexto, produto_id: produtoId });
+  const produtoId = id.replace('produto_', '');
+  await enviarTexto(telefone, 'Quantas unidades tem em estoque agora?');
+  await setConversa(telefone, 'aguardando_quantidade', { ...contexto, produto_atual: produtoId });
 }
 
-// ------------------------------------------------------------
-// Estado: aguardando a quantidade (número digitado)
-// ------------------------------------------------------------
 async function tratarQuantidade(telefone, texto, contexto) {
   const quantidade = parseFloat(texto.replace(',', '.'));
-
-  if (isNaN(quantidade) || quantidade <= 0) {
+  if (isNaN(quantidade) || quantidade < 0) {
     await enviarTexto(telefone, 'Manda só o número da quantidade, tipo: 3');
     return;
   }
 
   const responsavel = await getOuCriarResponsavel(telefone);
+  await supabase.from('contagens_estoque').insert({
+    produto_id: contexto.produto_atual,
+    quantidade_contada: quantidade,
+    responsavel_id: responsavel.id,
+  });
 
-  if (contexto.tipo === 'saida') {
-    await registrarSaida(contexto.produto_id, quantidade, responsavel.id);
-    await enviarTexto(telefone, '✅ Retirada registrada! Quer fazer mais alguma coisa? Manda "pedido" ou "retirar".');
-  } else {
-    await registrarItemPedido(contexto.produto_id, quantidade, responsavel.id);
-    await enviarTexto(telefone, '✅ Item adicionado ao pedido! Quer fazer mais alguma coisa? Manda "pedido" ou "retirar".');
+  const itens = [...(contexto.itens || []), { produto_id: contexto.produto_atual, quantidade_contada: quantidade }];
+
+  await enviarBotoesPosItem(telefone);
+  await setConversa(telefone, 'pos_item', { ...contexto, itens, produto_atual: null });
+}
+
+async function tratarPosItem(telefone, id, contexto) {
+  if (id === 'mais_itens') {
+    const { produtos, temMais } = await buscarProdutosPorCategoria(contexto.categoria, contexto.offset || 0);
+    await enviarListaProdutos(telefone, produtos, temMais, contexto.categoriaTitulo);
+    await setConversa(telefone, 'contando_produto', contexto);
+    return;
+  }
+  if (id === 'trocar_categoria') {
+    await enviarBotoesCategoria(telefone);
+    await setConversa(telefone, 'escolhendo_categoria', contexto);
+    return;
+  }
+  if (id === 'finalizar') {
+    await finalizarContagem(telefone, contexto);
+    return;
+  }
+  await enviarBotoesPosItem(telefone);
+}
+
+// ------------------------------------------------------------
+// Finaliza: calcula o pedido, salva e avisa responsável + gestores
+// ------------------------------------------------------------
+async function finalizarContagem(telefone, contexto) {
+  const itens = contexto.itens || [];
+  if (itens.length === 0) {
+    await enviarTexto(telefone, 'Nenhum item contado ainda. Manda "contagem" pra recomeçar quando quiser.');
+    await resetConversa(telefone);
+    return;
   }
 
+  const responsavel = await getOuCriarResponsavel(telefone);
+  const produtoIds = itens.map((i) => i.produto_id);
+  const { data: produtos } = await supabase
+    .from('produtos')
+    .select('id, nome, media_semanal, quantidade_alerta, unidade')
+    .in('id', produtoIds);
+
+  const { data: pedido } = await supabase
+    .from('pedidos')
+    .insert({ responsavel_id: responsavel.id, status: 'recebido' })
+    .select()
+    .single();
+
+  const linhasPedido = [];
+  const linhasAlerta = [];
+
+  for (const item of itens) {
+    const produto = produtos.find((p) => p.id === item.produto_id);
+    if (!produto) continue;
+
+    const sugerida = produto.media_semanal != null
+      ? Math.max(produto.media_semanal - item.quantidade_contada, 0)
+      : null;
+
+    await supabase.from('itens_pedido').insert({
+      pedido_id: pedido.id,
+      produto_id: produto.id,
+      quantidade_contada: item.quantidade_contada,
+      quantidade_sugerida: sugerida,
+      quantidade: sugerida,
+    });
+
+    if (sugerida != null && sugerida > 0) {
+      linhasPedido.push(`• ${produto.nome}: pedir ${sugerida} ${produto.unidade} (contou ${item.quantidade_contada})`);
+    }
+    if (produto.quantidade_alerta != null && item.quantidade_contada <= produto.quantidade_alerta) {
+      linhasAlerta.push(`⚠️ ${produto.nome}: só ${item.quantidade_contada} ${produto.unidade} em estoque`);
+    }
+  }
+
+  let resumo = `📋 Contagem finalizada!\n\n`;
+  resumo += linhasPedido.length > 0
+    ? `Pedido sugerido da semana:\n${linhasPedido.join('\n')}`
+    : 'Nenhum item precisa de pedido essa semana.';
+  if (linhasAlerta.length > 0) {
+    resumo += `\n\nAlertas de estoque baixo:\n${linhasAlerta.join('\n')}`;
+  }
+
+  await enviarTexto(telefone, resumo);
+  await enviarResumoParaGestores(resumo);
   await resetConversa(telefone);
 }
 
+async function enviarResumoParaGestores(resumo) {
+  const { data: gestores } = await supabase
+    .from('usuarios_app')
+    .select('telefone_whatsapp')
+    .eq('papel', 'gestor')
+    .not('telefone_whatsapp', 'is', null);
+
+  for (const g of gestores || []) {
+    await enviarTexto(g.telefone_whatsapp, resumo);
+  }
+}
+
 // ============================================================
-// Acesso ao banco (Supabase)
+// Banco (Supabase)
 // ============================================================
 async function getConversa(telefone) {
-  const { data } = await supabase
-    .from('conversas_whatsapp')
-    .select('*')
-    .eq('telefone', telefone)
-    .maybeSingle();
+  const { data } = await supabase.from('conversas_whatsapp').select('*').eq('telefone', telefone).maybeSingle();
   return data;
 }
 
@@ -190,58 +268,25 @@ async function resetConversa(telefone) {
   await setConversa(telefone, 'inicio', {});
 }
 
-async function buscarProdutosAtivos() {
+async function buscarProdutosPorCategoria(categoria, offset) {
   const { data } = await supabase
     .from('produtos')
     .select('id, nome')
+    .eq('categoria', categoria)
     .eq('ativo', true)
     .order('nome')
-    .limit(10); // limite da lista interativa do WhatsApp
-  return data || [];
+    .range(offset, offset + 9); // pega 10 pra saber se tem mais
+
+  const temMais = (data || []).length > 9;
+  const produtos = (data || []).slice(0, 9);
+  return { produtos, temMais };
 }
 
 async function getOuCriarResponsavel(telefone) {
-  const { data: existente } = await supabase
-    .from('responsaveis')
-    .select('*')
-    .eq('telefone', telefone)
-    .maybeSingle();
-
+  const { data: existente } = await supabase.from('responsaveis').select('*').eq('telefone', telefone).maybeSingle();
   if (existente) return existente;
-
-  const { data: novo } = await supabase
-    .from('responsaveis')
-    .insert({ telefone })
-    .select()
-    .single();
+  const { data: novo } = await supabase.from('responsaveis').insert({ telefone }).select().single();
   return novo;
-}
-
-async function registrarSaida(produtoId, quantidade, responsavelId) {
-  await supabase.from('movimentos_estoque').insert({
-    produto_id: produtoId,
-    tipo: 'saida',
-    quantidade,
-    origem: 'consumo_interno',
-    registrado_via: 'whatsapp',
-    responsavel_id: responsavelId,
-  });
-}
-
-async function registrarItemPedido(produtoId, quantidade, responsavelId) {
-  // Por enquanto cria um pedido novo por item; dá pra evoluir depois
-  // pra agrupar vários itens no mesmo pedido antes de fechar.
-  const { data: pedido } = await supabase
-    .from('pedidos')
-    .insert({ responsavel_id: responsavelId, status: 'recebido' })
-    .select()
-    .single();
-
-  await supabase.from('itens_pedido').insert({
-    pedido_id: pedido.id,
-    produto_id: produtoId,
-    quantidade,
-  });
 }
 
 // ============================================================
@@ -250,53 +295,53 @@ async function registrarItemPedido(produtoId, quantidade, responsavelId) {
 async function chamarGraphAPI(payload) {
   const resposta = await fetch(GRAPH_URL, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-
   if (!resposta.ok) {
-    const corpo = await resposta.text();
-    console.error(`[whatsapp] Graph API retornou erro ${resposta.status}:`, corpo);
-  } else {
-    console.log('[whatsapp] Mensagem enviada com sucesso pela Graph API');
+    console.error(`[whatsapp] Graph API erro ${resposta.status}:`, await resposta.text());
   }
 }
 
 async function enviarTexto(telefone, texto) {
-  await chamarGraphAPI({
-    messaging_product: 'whatsapp',
-    to: telefone,
-    type: 'text',
-    text: { body: texto },
-  });
+  await chamarGraphAPI({ messaging_product: 'whatsapp', to: telefone, type: 'text', text: { body: texto } });
 }
 
-async function enviarBotoesMenu(telefone) {
+async function enviarBotoesCategoria(telefone) {
   await chamarGraphAPI({
     messaging_product: 'whatsapp',
     to: telefone,
     type: 'interactive',
     interactive: {
       type: 'button',
-      body: { text: 'O que você quer fazer?' },
+      body: { text: 'Qual categoria você vai contar?' },
+      action: { buttons: CATEGORIAS.map((c) => ({ type: 'reply', reply: { id: c.id, title: c.titulo } })) },
+    },
+  });
+}
+
+async function enviarBotoesPosItem(telefone) {
+  await chamarGraphAPI({
+    messaging_product: 'whatsapp',
+    to: telefone,
+    type: 'interactive',
+    interactive: {
+      type: 'button',
+      body: { text: 'O que você quer fazer agora?' },
       action: {
         buttons: [
-          { type: 'reply', reply: { id: 'menu_pedido', title: 'Fazer pedido' } },
-          { type: 'reply', reply: { id: 'menu_saida', title: 'Registrar retirada' } },
+          { type: 'reply', reply: { id: 'mais_itens', title: 'Contar outro item' } },
+          { type: 'reply', reply: { id: 'trocar_categoria', title: 'Trocar categoria' } },
+          { type: 'reply', reply: { id: 'finalizar', title: 'Finalizar' } },
         ],
       },
     },
   });
 }
 
-async function enviarListaProdutos(telefone, produtos, tipo) {
-  const rows = produtos.map((p) => ({
-    id: `produto_${p.id}`,
-    title: p.nome.slice(0, 24), // limite do WhatsApp por linha
-  }));
+async function enviarListaProdutos(telefone, produtos, temMais, categoriaTitulo) {
+  const rows = produtos.map((p) => ({ id: `produto_${p.id}`, title: p.nome.slice(0, 24) }));
+  if (temMais) rows.push({ id: 'mais_produtos', title: 'Ver mais itens ➜' });
 
   await chamarGraphAPI({
     messaging_product: 'whatsapp',
@@ -304,11 +349,8 @@ async function enviarListaProdutos(telefone, produtos, tipo) {
     type: 'interactive',
     interactive: {
       type: 'list',
-      body: { text: tipo === 'saida' ? 'O que você está retirando?' : 'O que você quer pedir?' },
-      action: {
-        button: 'Escolher item',
-        sections: [{ title: 'Produtos', rows }],
-      },
+      body: { text: `${categoriaTitulo}: qual item você vai contar?` },
+      action: { button: 'Escolher item', sections: [{ title: categoriaTitulo, rows }] },
     },
   });
 }
