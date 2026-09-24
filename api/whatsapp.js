@@ -56,11 +56,15 @@ async function handleIncomingMessage(req, res) {
     const telefone = message.from; // já vem em formato E.164, ex: "5544999999999"
     const texto = extrairTexto(message);
 
+    console.log(`[whatsapp] Mensagem recebida de ${telefone}: type=${message.type} texto="${texto}"`);
+
     await processarMensagem(telefone, texto);
+
+    console.log(`[whatsapp] Processamento concluído para ${telefone}`);
 
     return res.status(200).send('ok');
   } catch (err) {
-    console.error('Erro no webhook:', err);
+    console.error('[whatsapp] Erro no webhook:', err);
     // Sempre responde 200 pra Meta não ficar reenviando a mesma mensagem
     return res.status(200).send('erro tratado');
   }
@@ -244,7 +248,7 @@ async function registrarItemPedido(produtoId, quantidade, responsavelId) {
 // Envio de mensagens (WhatsApp Cloud API)
 // ============================================================
 async function chamarGraphAPI(payload) {
-  await fetch(GRAPH_URL, {
+  const resposta = await fetch(GRAPH_URL, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${WHATSAPP_TOKEN}`,
@@ -252,6 +256,13 @@ async function chamarGraphAPI(payload) {
     },
     body: JSON.stringify(payload),
   });
+
+  if (!resposta.ok) {
+    const corpo = await resposta.text();
+    console.error(`[whatsapp] Graph API retornou erro ${resposta.status}:`, corpo);
+  } else {
+    console.log('[whatsapp] Mensagem enviada com sucesso pela Graph API');
+  }
 }
 
 async function enviarTexto(telefone, texto) {
