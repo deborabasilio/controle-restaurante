@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jacaré Vermelho — Controle de Bebidas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<nav>
+  <img src="assets/jacare-vermelho.png" alt="Jacaré Vermelho">
+  <div class="wordmark">JACARÉ <span>VERMELHO</span></div>
+</nav>
+
+<main>
+  <div class="card">
+    <img class="card-logo" src="assets/jacare-vermelho.png" alt="">
+    <h1>Controle de bebidas</h1>
+    <p class="subtitulo">Acesso restrito ao gestor</p>
+
+    <div class="tabs">
+      <button class="tab ativa" data-tab="entrar">Entrar</button>
+      <button class="tab" data-tab="criar">Criar conta</button>
+    </div>
+
+    <form id="form-entrar" class="ativa">
+      <div class="campo">
+        <label for="entrar-email">E-mail</label>
+        <input id="entrar-email" type="email" required autocomplete="email">
+      </div>
+      <div class="campo">
+        <label for="entrar-senha">Senha</label>
+        <input id="entrar-senha" type="password" required autocomplete="current-password">
+      </div>
+      <button class="entrar" type="submit">Entrar</button>
+    </form>
+
+    <form id="form-criar">
+      <div class="campo">
+        <label for="criar-nome">Seu nome</label>
+        <input id="criar-nome" type="text" required>
+      </div>
+      <div class="campo">
+        <label for="criar-telefone">WhatsApp (com DDD)</label>
+        <input id="criar-telefone" type="tel" placeholder="5544999999999" required>
+        <span class="dica">É pra esse número que os pedidos calculados vão chegar.</span>
+      </div>
+      <div class="campo">
+        <label for="criar-email">E-mail</label>
+        <input id="criar-email" type="email" required autocomplete="email">
+      </div>
+      <div class="campo">
+        <label for="criar-senha">Senha</label>
+        <input id="criar-senha" type="password" required minlength="6" autocomplete="new-password">
+      </div>
+      <button class="entrar" type="submit">Criar conta de gestor</button>
+    </form>
+
+    <div id="mensagem" class="mensagem"></div>
+  </div>
+</main>
+
+<footer>Jacaré Vermelho · uso interno</footer>
+
+<script src="js/auth.js"></script>
+</body>
+</html>

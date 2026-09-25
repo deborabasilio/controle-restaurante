@@ -1,0 +1,184 @@
+:root {
+  --preto: #0c0c0c;
+  --superficie: #161615;
+  --branco: #f4f1ea;
+  --vermelho: #d62828;
+  --vermelho-escuro: #8c1616;
+  --cinza: #85847d;
+  --linha: #2a2a28;
+  -webkit-text-size-adjust: 100%;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari: altura real, sem a barra de endereço contar */
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0) 0 0/22px 22px,
+    var(--preto);
+  color: var(--branco);
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--linha);
+}
+
+nav img { width: 40px; height: 40px; display: block; }
+
+.wordmark {
+  font-family: 'Anton', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 20px;
+  line-height: 1;
+}
+.wordmark span { color: var(--vermelho); }
+
+main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--branco);
+  color: var(--preto);
+  border-top: 4px solid var(--vermelho);
+  box-shadow: 10px 10px 0 rgba(0,0,0,0.35);
+  padding: 36px 32px 32px;
+}
+
+.card-logo {
+  width: 76px;
+  height: 76px;
+  display: block;
+  margin: 0 auto 18px;
+}
+
+h1 {
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+  text-align: center;
+  margin: 0 0 4px;
+  letter-spacing: 0.01em;
+}
+
+.subtitulo {
+  text-align: center;
+  color: #55534c;
+  font-size: 14px;
+  margin: 0 0 26px;
+}
+
+.tabs {
+  display: flex;
+  border: 1px solid #d8d5ca;
+  margin-bottom: 24px;
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 10px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: #55534c;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.tab.ativa {
+  background: var(--preto);
+  color: var(--branco);
+}
+
+form { display: none; flex-direction: column; gap: 14px; }
+form.ativa { display: flex; }
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3a3934;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d8d5ca;
+  background: #fff;
+  font-size: 16px; /* abaixo de 16px o Safari iOS dá zoom automático ao focar */
+  font-family: inherit;
+  color: var(--preto);
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+input:focus {
+  outline: 2px solid var(--vermelho);
+  outline-offset: 1px;
+  border-color: var(--vermelho);
+}
+
+.campo { display: flex; flex-direction: column; gap: 6px; }
+
+.dica {
+  font-size: 12px;
+  color: var(--cinza);
+  margin-top: -4px;
+}
+
+button.entrar {
+  margin-top: 6px;
+  padding: 14px;
+  min-height: 48px;
+  background: var(--vermelho);
+  color: #fff;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+  transition: background 0.15s ease;
+}
+button.entrar:hover { background: var(--vermelho-escuro); }
+button.entrar:disabled { opacity: 0.6; cursor: default; }
+
+.mensagem {
+  font-size: 13px;
+  padding: 10px 12px;
+  margin-top: 14px;
+  display: none;
+}
+.mensagem.erro { display: block; background: #fbe4e4; color: #8c1616; border-left: 3px solid var(--vermelho); }
+.mensagem.sucesso { display: block; background: #e8f3e6; color: #2b5c22; border-left: 3px solid #2b5c22; }
+
+footer {
+  text-align: center;
+  padding: 18px;
+  font-size: 12px;
+  color: var(--cinza);
+}
