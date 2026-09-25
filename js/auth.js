@@ -1,8 +1,7 @@
-
 const SUPABASE_URL = 'https://otdwyajhwgenykjdeynv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_KhvLPkG-7NYLRlEFUhnkJw_-HEFJN1g';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const tabs = document.querySelectorAll('.tab');
 const forms = { entrar: document.getElementById('form-entrar'), criar: document.getElementById('form-criar') };
@@ -32,7 +31,7 @@ forms.entrar.addEventListener('submit', async (e) => {
   const email = document.getElementById('entrar-email').value;
   const senha = document.getElementById('entrar-senha').value;
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
   if (error) {
     mostrarMensagem('E-mail ou senha incorretos.', 'erro');
     return;
@@ -48,7 +47,7 @@ forms.criar.addEventListener('submit', async (e) => {
   const email = document.getElementById('criar-email').value;
   const senha = document.getElementById('criar-senha').value;
 
-  const { error } = await supabase.auth.signUp({
+  const { error } = await supabaseClient.auth.signUp({
     email,
     password: senha,
     options: { data: { nome, papel: 'gestor', telefone_whatsapp: telefone } },
