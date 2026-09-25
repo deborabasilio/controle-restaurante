@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard — Jacaré Vermelho</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<nav>
+  <img src="/assets/jacare-vermelho.png" alt="Jacaré Vermelho">
+  <div class="wordmark">JACARÉ <span>VERMELHO</span></div>
+  <button class="sair" id="sair">Sair</button>
+</nav>
+
+<main>
+  <h2>Alertas de estoque</h2>
+  <div id="alertas">
+    <p class="carregando">Carregando…</p>
+  </div>
+
+  <h2>Produtos</h2>
+  <div class="tabs-categoria" id="tabs-categoria"></div>
+  <div class="lista-produtos" id="lista-produtos">
+    <p class="carregando">Carregando…</p>
+  </div>
+</main>
+
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

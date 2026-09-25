@@ -3,6 +3,13 @@ const SUPABASE_ANON_KEY = 'sb_publishable_KhvLPkG-7NYLRlEFUhnkJw_-HEFJN1g';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Se já existe uma sessão salva (login anterior), pula direto pro dashboard
+supabaseClient.auth.getSession().then(({ data }) => {
+  if (data.session) {
+    window.location.href = '/dashboard.html';
+  }
+});
+
 const tabs = document.querySelectorAll('.tab');
 const forms = { entrar: document.getElementById('form-entrar'), criar: document.getElementById('form-criar') };
 const mensagem = document.getElementById('mensagem');
