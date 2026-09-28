@@ -7,13 +7,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="css/dashboard.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <nav>
-  <img src="/assets/jacare-vermelho.png" alt="Jacaré Vermelho">
+  <img src="assets/jacare-vermelho.png" alt="Jacaré Vermelho">
   <div class="wordmark">JACARÉ <span>VERMELHO</span></div>
   <button class="sair" id="sair">Sair</button>
 </nav>
@@ -29,8 +29,54 @@
   <div class="lista-produtos" id="lista-produtos">
     <p class="carregando">Carregando…</p>
   </div>
+
+  <h2>Meus dados</h2>
+  <div class="produto-card">
+    <div class="campos-produto">
+      <div class="campo-mini">
+        <label>Nome</label>
+        <input type="text" id="meu-nome" disabled>
+      </div>
+      <div class="campo-mini">
+        <label>WhatsApp</label>
+        <input type="tel" id="meu-telefone" placeholder="5544999999999">
+      </div>
+    </div>
+    <button class="salvar-produto" id="salvar-meus-dados">Salvar</button>
+  </div>
+
+  <div id="secao-convidar">
+    <h2>Convidar usuário</h2>
+    <div class="produto-card">
+      <div class="campos-produto">
+        <div class="campo-mini">
+          <label>Nome</label>
+          <input type="text" id="convite-nome">
+        </div>
+        <div class="campo-mini">
+          <label>Papel</label>
+          <select id="convite-papel">
+            <option value="funcionario">Funcionário</option>
+            <option value="gestor">Gestor</option>
+          </select>
+        </div>
+      </div>
+      <div class="campos-produto" style="margin-top: 10px;">
+        <div class="campo-mini">
+          <label>E-mail</label>
+          <input type="email" id="convite-email">
+        </div>
+        <div class="campo-mini">
+          <label>WhatsApp (opcional)</label>
+          <input type="tel" id="convite-telefone" placeholder="5544999999999">
+        </div>
+      </div>
+      <button class="salvar-produto" id="enviar-convite">Enviar convite</button>
+      <p id="convite-mensagem" class="sem-alerta" style="margin-top: 10px;"></p>
+    </div>
+  </div>
 </main>
 
-<script src="/js/dashboard.js"></script>
+<script src="js/dashboard.js"></script>
 </body>
 </html>

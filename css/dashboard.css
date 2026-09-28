@@ -122,16 +122,18 @@ main > h2:first-child { margin-top: 8px; }
 .campos-produto { display: flex; gap: 10px; }
 .campo-mini { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .campo-mini label { font-size: 11px; color: var(--cinza); }
-.campo-mini input {
+.campo-mini input, .campo-mini select {
   padding: 9px;
   border: 1px solid var(--linha);
   background: var(--preto);
   color: var(--branco);
   font-size: 16px;
+  font-family: inherit;
   -webkit-appearance: none;
   appearance: none;
 }
-.campo-mini input:focus { outline: 2px solid var(--vermelho); }
+.campo-mini input:focus, .campo-mini select:focus { outline: 2px solid var(--vermelho); }
+.campo-mini input:disabled { opacity: 0.5; }
 
 .salvar-produto {
   margin-top: 10px;

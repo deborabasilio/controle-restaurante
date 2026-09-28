@@ -22,6 +22,7 @@ async function iniciar() {
     return;
   }
   await carregarProdutos();
+  await carregarMeusDados(data.session);
 }
 
 document.getElementById('sair').addEventListener('click', async () => {
@@ -155,5 +156,73 @@ async function salvarProduto(id, campos) {
   const { error } = await supabaseClient.from('produtos').update(campos).eq('id', id);
   if (error) console.error('[dashboard] Erro ao salvar produto:', error);
 }
+
+// ------------------------------------------------------------
+// Meus dados (nome, telefone) + esconder convite se não for gestor
+// ------------------------------------------------------------
+let sessaoAtual = null;
+
+async function carregarMeusDados(session) {
+  sessaoAtual = session;
+  const { data: meuUsuario } = await supabaseClient
+    .from('usuarios_app')
+    .select('nome, papel, telefone_whatsapp')
+    .eq('id', session.user.id)
+    .maybeSingle();
+
+  if (!meuUsuario) return;
+
+  document.getElementById('meu-nome').value = meuUsuario.nome || '';
+  document.getElementById('meu-telefone').value = meuUsuario.telefone_whatsapp || '';
+
+  if (meuUsuario.papel !== 'gestor') {
+    document.getElementById('secao-convidar').style.display = 'none';
+  }
+}
+
+document.getElementById('salvar-meus-dados').addEventListener('click', async (e) => {
+  const btn = e.target;
+  const telefone = document.getElementById('meu-telefone').value.replace(/\D/g, '');
+  const { error } = await supabaseClient
+    .from('usuarios_app')
+    .update({ telefone_whatsapp: telefone })
+    .eq('id', sessaoAtual.user.id);
+
+  btn.textContent = error ? 'Erro ao salvar' : 'Salvo ✓';
+  if (!error) btn.classList.add('salvo');
+  setTimeout(() => { btn.textContent = 'Salvar'; btn.classList.remove('salvo'); }, 1500);
+});
+
+// ------------------------------------------------------------
+// Convidar novo usuário
+// ------------------------------------------------------------
+document.getElementById('enviar-convite').addEventListener('click', async () => {
+  const mensagem = document.getElementById('convite-mensagem');
+  mensagem.textContent = 'Enviando...';
+
+  const nome = document.getElementById('convite-nome').value;
+  const email = document.getElementById('convite-email').value;
+  const papel = document.getElementById('convite-papel').value;
+  const telefone_whatsapp = document.getElementById('convite-telefone').value.replace(/\D/g, '') || null;
+
+  const resposta = await fetch('/api/convidar-usuario', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${sessaoAtual.access_token}`,
+    },
+    body: JSON.stringify({ nome, email, papel, telefone_whatsapp }),
+  });
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    mensagem.textContent = 'Erro: ' + resultado.error;
+    return;
+  }
+  mensagem.textContent = `Convite enviado pra ${email}!`;
+  document.getElementById('convite-nome').value = '';
+  document.getElementById('convite-email').value = '';
+  document.getElementById('convite-telefone').value = '';
+});
 
 iniciar();
