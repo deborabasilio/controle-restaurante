@@ -15,37 +15,74 @@
 <nav>
   <img src="assets/jacare-vermelho.png" alt="Jacaré Vermelho">
   <div class="wordmark">JACARÉ <span>VERMELHO</span></div>
-  <button class="sair" id="sair">Sair</button>
+  <button class="hamburguer" id="abrir-menu" aria-label="Abrir menu" aria-expanded="false">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square">
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+    <span class="badge-menu" id="badge-menu" hidden></span>
+  </button>
 </nav>
 
+<div class="overlay" id="overlay"></div>
+
+<aside class="menu" id="menu" aria-hidden="true">
+  <div class="menu-topo">
+    <span class="menu-titulo">Menu</span>
+    <button class="fechar-menu" id="fechar-menu" aria-label="Fechar menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square">
+        <line x1="5" y1="5" x2="19" y2="19"></line>
+        <line x1="19" y1="5" x2="5" y2="19"></line>
+      </svg>
+    </button>
+  </div>
+
+  <button class="menu-item ativa" data-view="alertas">
+    Alertas de estoque
+    <span class="badge-item" id="badge-alertas" hidden></span>
+  </button>
+  <button class="menu-item" data-view="produtos">Produtos</button>
+  <button class="menu-item" data-view="meus-dados">Meus dados</button>
+  <button class="menu-item" data-view="convidar" id="menu-convidar">Convidar usuário</button>
+
+  <button class="menu-item menu-sair" id="sair">Sair</button>
+</aside>
+
 <main>
-  <h2>Alertas de estoque</h2>
-  <div id="alertas">
-    <p class="carregando">Carregando…</p>
-  </div>
-
-  <h2>Produtos</h2>
-  <div class="tabs-categoria" id="tabs-categoria"></div>
-  <div class="lista-produtos" id="lista-produtos">
-    <p class="carregando">Carregando…</p>
-  </div>
-
-  <h2>Meus dados</h2>
-  <div class="produto-card">
-    <div class="campos-produto">
-      <div class="campo-mini">
-        <label>Nome</label>
-        <input type="text" id="meu-nome" disabled>
-      </div>
-      <div class="campo-mini">
-        <label>WhatsApp</label>
-        <input type="tel" id="meu-telefone" placeholder="5544999999999">
-      </div>
+  <section class="view ativa" id="view-alertas">
+    <h2>Alertas de estoque</h2>
+    <div id="alertas">
+      <p class="carregando">Carregando…</p>
     </div>
-    <button class="salvar-produto" id="salvar-meus-dados">Salvar</button>
-  </div>
+  </section>
 
-  <div id="secao-convidar">
+  <section class="view" id="view-produtos">
+    <h2>Produtos</h2>
+    <div class="tabs-categoria" id="tabs-categoria"></div>
+    <div class="lista-produtos" id="lista-produtos">
+      <p class="carregando">Carregando…</p>
+    </div>
+  </section>
+
+  <section class="view" id="view-meus-dados">
+    <h2>Meus dados</h2>
+    <div class="produto-card">
+      <div class="campos-produto">
+        <div class="campo-mini">
+          <label>Nome</label>
+          <input type="text" id="meu-nome" disabled>
+        </div>
+        <div class="campo-mini">
+          <label>WhatsApp</label>
+          <input type="tel" id="meu-telefone" placeholder="5544999999999">
+        </div>
+      </div>
+      <button class="salvar-produto" id="salvar-meus-dados">Salvar</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-convidar">
     <h2>Convidar usuário</h2>
     <div class="produto-card">
       <div class="campos-produto">
@@ -74,7 +111,7 @@
       <button class="salvar-produto" id="enviar-convite">Enviar convite</button>
       <p id="convite-mensagem" class="sem-alerta" style="margin-top: 10px;"></p>
     </div>
-  </div>
+  </section>
 </main>
 
 <script src="js/dashboard.js"></script>

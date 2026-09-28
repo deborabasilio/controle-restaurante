@@ -31,6 +31,49 @@ document.getElementById('sair').addEventListener('click', async () => {
 });
 
 // ------------------------------------------------------------
+// Menu hambúrguer e troca de telas
+// ------------------------------------------------------------
+const menu = document.getElementById('menu');
+const overlay = document.getElementById('overlay');
+const botaoAbrir = document.getElementById('abrir-menu');
+
+function abrirMenu() {
+  menu.classList.add('aberto');
+  overlay.classList.add('aberto');
+  menu.setAttribute('aria-hidden', 'false');
+  botaoAbrir.setAttribute('aria-expanded', 'true');
+}
+
+function fecharMenu() {
+  menu.classList.remove('aberto');
+  overlay.classList.remove('aberto');
+  menu.setAttribute('aria-hidden', 'true');
+  botaoAbrir.setAttribute('aria-expanded', 'false');
+}
+
+function mostrarView(nome) {
+  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('ativa', v.id === `view-${nome}`));
+  document.querySelectorAll('.menu-item[data-view]').forEach((i) => i.classList.toggle('ativa', i.dataset.view === nome));
+  fecharMenu();
+  window.scrollTo(0, 0);
+}
+
+botaoAbrir.addEventListener('click', abrirMenu);
+document.getElementById('fechar-menu').addEventListener('click', fecharMenu);
+overlay.addEventListener('click', fecharMenu);
+document.querySelectorAll('.menu-item[data-view]').forEach((item) => {
+  item.addEventListener('click', () => mostrarView(item.dataset.view));
+});
+
+function atualizarBadges(qtd) {
+  ['badge-menu', 'badge-alertas'].forEach((id) => {
+    const el = document.getElementById(id);
+    el.textContent = qtd;
+    el.hidden = qtd === 0;
+  });
+}
+
+// ------------------------------------------------------------
 // Carrega produtos e desenha alertas + lista da categoria ativa
 // ------------------------------------------------------------
 async function carregarProdutos() {
@@ -56,6 +99,7 @@ function desenharAlertas() {
   const emAlerta = produtosCache.filter(
     (p) => p.quantidade_alerta != null && p.quantidade_estoque <= p.quantidade_alerta
   );
+  atualizarBadges(emAlerta.length);
 
   if (emAlerta.length === 0) {
     container.innerHTML = '<p class="sem-alerta">Nenhum item com estoque baixo agora. 👍</p>';
@@ -176,7 +220,7 @@ async function carregarMeusDados(session) {
   document.getElementById('meu-telefone').value = meuUsuario.telefone_whatsapp || '';
 
   if (meuUsuario.papel !== 'gestor') {
-    document.getElementById('secao-convidar').style.display = 'none';
+    document.getElementById('menu-convidar').style.display = 'none';
   }
 }
 
