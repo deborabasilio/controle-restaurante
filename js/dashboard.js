@@ -18,7 +18,7 @@ let produtosCache = [];
 async function iniciar() {
   const { data } = await supabaseClient.auth.getSession();
   if (!data.session) {
-    window.location.href = '/index.html';
+    window.location.href = 'index.html';
     return;
   }
   await carregarProdutos();
@@ -27,7 +27,7 @@ async function iniciar() {
 
 document.getElementById('sair').addEventListener('click', async () => {
   await supabaseClient.auth.signOut();
-  window.location.href = '/index.html';
+  window.location.href = 'index.html';
 });
 
 // ------------------------------------------------------------
@@ -249,7 +249,7 @@ document.getElementById('enviar-convite').addEventListener('click', async () => 
   const papel = document.getElementById('convite-papel').value;
   const telefone_whatsapp = document.getElementById('convite-telefone').value.replace(/\D/g, '') || null;
 
-  const resposta = await fetch('/api/convidar-usuario', {
+  const resposta = await fetch('api/convidar-usuario', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -267,6 +267,83 @@ document.getElementById('enviar-convite').addEventListener('click', async () => 
   document.getElementById('convite-nome').value = '';
   document.getElementById('convite-email').value = '';
   document.getElementById('convite-telefone').value = '';
+});
+
+// ------------------------------------------------------------
+// Adicionar novo produto
+// ------------------------------------------------------------
+const formNovo = document.getElementById('form-novo-produto');
+const botaoAbrirNovo = document.getElementById('abrir-novo-produto');
+const mensagemNovo = document.getElementById('novo-mensagem');
+
+function mostrarMensagemNovo(texto, tipo) {
+  mensagemNovo.textContent = texto;
+  mensagemNovo.className = `mensagem-form ${tipo || ''}`;
+}
+
+function limparFormNovo() {
+  ['novo-nome', 'novo-codigo', 'novo-estoque', 'novo-media', 'novo-alerta'].forEach((id) => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('novo-unidade').value = 'un';
+  mostrarMensagemNovo('');
+}
+
+function abrirFormNovo() {
+  limparFormNovo();
+  // Já vem com a categoria da aba que está aberta
+  document.getElementById('novo-categoria').value = categoriaAtiva;
+  formNovo.hidden = false;
+  botaoAbrirNovo.hidden = true;
+  document.getElementById('novo-nome').focus();
+}
+
+function fecharFormNovo() {
+  formNovo.hidden = true;
+  botaoAbrirNovo.hidden = false;
+}
+
+function numeroOuNulo(valor) {
+  return valor === '' ? null : parseFloat(valor);
+}
+
+botaoAbrirNovo.addEventListener('click', abrirFormNovo);
+document.getElementById('cancelar-novo-produto').addEventListener('click', fecharFormNovo);
+
+document.getElementById('salvar-novo-produto').addEventListener('click', async () => {
+  const nome = document.getElementById('novo-nome').value.trim();
+  if (!nome) {
+    mostrarMensagemNovo('Preencha o nome do produto.', 'erro');
+    return;
+  }
+
+  const categoria = document.getElementById('novo-categoria').value;
+  const novoProduto = {
+    nome,
+    categoria,
+    unidade: document.getElementById('novo-unidade').value,
+    codigo_interno: document.getElementById('novo-codigo').value.trim() || null,
+    quantidade_estoque: numeroOuNulo(document.getElementById('novo-estoque').value) ?? 0,
+    media_semanal: numeroOuNulo(document.getElementById('novo-media').value),
+    quantidade_alerta: numeroOuNulo(document.getElementById('novo-alerta').value),
+  };
+
+  mostrarMensagemNovo('Salvando…');
+  const { error } = await supabaseClient.from('produtos').insert(novoProduto);
+
+  if (error) {
+    // 23505 = violação de unicidade (código interno repetido)
+    const texto = error.code === '23505'
+      ? 'Já existe um produto com esse código interno.'
+      : 'Erro ao salvar: ' + error.message;
+    mostrarMensagemNovo(texto, 'erro');
+    return;
+  }
+
+  // Mostra o produto novo na aba da categoria que ele foi cadastrado
+  categoriaAtiva = categoria;
+  await carregarProdutos();
+  fecharFormNovo();
 });
 
 iniciar();

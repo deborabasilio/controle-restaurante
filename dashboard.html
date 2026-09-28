@@ -59,6 +59,68 @@
 
   <section class="view" id="view-produtos">
     <h2>Produtos</h2>
+
+    <button class="botao-adicionar" id="abrir-novo-produto">+ Adicionar produto</button>
+
+    <div class="produto-card form-novo" id="form-novo-produto" hidden>
+      <div class="titulo-form">Novo produto</div>
+
+      <div class="campos-produto">
+        <div class="campo-mini cheio">
+          <label for="novo-nome">Nome</label>
+          <input type="text" id="novo-nome" placeholder="Ex: Heineken 330 ml" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="campos-produto">
+        <div class="campo-mini">
+          <label for="novo-categoria">Categoria</label>
+          <select id="novo-categoria">
+            <option value="bebida">Bebidas</option>
+            <option value="cerveja">Cervejas</option>
+            <option value="vinho">Vinhos</option>
+          </select>
+        </div>
+        <div class="campo-mini">
+          <label for="novo-unidade">Unidade</label>
+          <select id="novo-unidade">
+            <option value="un">un</option>
+            <option value="garrafa">garrafa</option>
+            <option value="caixa">caixa</option>
+            <option value="pacote">pacote</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="campos-produto">
+        <div class="campo-mini">
+          <label for="novo-codigo">Código interno</label>
+          <input type="text" id="novo-codigo" placeholder="FT_B000" autocomplete="off">
+        </div>
+        <div class="campo-mini">
+          <label for="novo-estoque">Estoque inicial</label>
+          <input type="number" id="novo-estoque" min="0" step="1" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="campos-produto">
+        <div class="campo-mini">
+          <label for="novo-media">Média semanal</label>
+          <input type="number" id="novo-media" min="0" step="1" placeholder="—" inputmode="numeric">
+        </div>
+        <div class="campo-mini">
+          <label for="novo-alerta">Alerta em</label>
+          <input type="number" id="novo-alerta" min="0" step="1" placeholder="—" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="acoes-form">
+        <button class="secundario" id="cancelar-novo-produto" type="button">Cancelar</button>
+        <button class="primario" id="salvar-novo-produto" type="button">Salvar produto</button>
+      </div>
+      <p class="mensagem-form" id="novo-mensagem"></p>
+    </div>
+
     <div class="tabs-categoria" id="tabs-categoria"></div>
     <div class="lista-produtos" id="lista-produtos">
       <p class="carregando">Carregando…</p>
