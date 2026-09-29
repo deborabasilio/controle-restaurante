@@ -68,6 +68,13 @@ function extrairTexto(message) {
 // Máquina de estados
 // ============================================================
 async function processarMensagem(telefone, texto) {
+  const t = texto.toLowerCase().trim();
+  if (['cancelar', 'menu', 'sair', 'reiniciar', 'voltar'].includes(t)) {
+    await resetConversa(telefone);
+    await enviarTexto(telefone, 'Ok, cancelei. Manda "contagem" quando quiser começar de novo.');
+    return;
+  }
+
   const conversa = await getConversa(telefone);
   const estado = conversa?.estado || 'inicio';
   const contexto = conversa?.contexto || {};
@@ -102,7 +109,7 @@ async function tratarInicio(telefone, texto) {
 async function tratarEscolhaCategoria(telefone, id, contexto) {
   const categoria = CATEGORIAS.find((c) => c.id === id);
   if (!categoria) {
-    await enviarTexto(telefone, 'Escolhe uma das opções, por favor 🙂');
+    await enviarTexto(telefone, 'Escolhe uma das opções, por favor 🙂 (ou manda "cancelar" pra recomeçar)');
     return;
   }
   const { produtos, temMais } = await buscarProdutosPorCategoria(categoria.valor, 0);
@@ -111,7 +118,12 @@ async function tratarEscolhaCategoria(telefone, id, contexto) {
     await enviarBotoesCategoria(telefone);
     return;
   }
-  await enviarListaProdutos(telefone, produtos, temMais, categoria.titulo);
+  const enviou = await enviarListaProdutos(telefone, produtos, temMais, categoria.titulo);
+  if (!enviou) {
+    await enviarTexto(telefone, 'Deu um erro ao mostrar a lista. Manda "contagem" de novo pra tentar outra vez.');
+    await resetConversa(telefone);
+    return;
+  }
   await setConversa(telefone, 'contando_produto', { ...contexto, categoria: categoria.valor, categoriaTitulo: categoria.titulo, offset: 0 });
 }
 
@@ -119,12 +131,12 @@ async function tratarEscolhaProduto(telefone, id, contexto) {
   if (id === 'mais_produtos') {
     const novoOffset = (contexto.offset || 0) + 9;
     const { produtos, temMais } = await buscarProdutosPorCategoria(contexto.categoria, novoOffset);
-    await enviarListaProdutos(telefone, produtos, temMais, contexto.categoriaTitulo);
-    await setConversa(telefone, 'contando_produto', { ...contexto, offset: novoOffset });
+    const enviou = await enviarListaProdutos(telefone, produtos, temMais, contexto.categoriaTitulo);
+    if (enviou) await setConversa(telefone, 'contando_produto', { ...contexto, offset: novoOffset });
     return;
   }
   if (!id.startsWith('produto_')) {
-    await enviarTexto(telefone, 'Escolhe um item da lista, por favor 🙂');
+    await enviarTexto(telefone, 'Escolhe um item da lista, por favor 🙂 (ou manda "cancelar" pra recomeçar)');
     return;
   }
   const produtoId = id.replace('produto_', '');
@@ -155,8 +167,8 @@ async function tratarQuantidade(telefone, texto, contexto) {
 async function tratarPosItem(telefone, id, contexto) {
   if (id === 'mais_itens') {
     const { produtos, temMais } = await buscarProdutosPorCategoria(contexto.categoria, contexto.offset || 0);
-    await enviarListaProdutos(telefone, produtos, temMais, contexto.categoriaTitulo);
-    await setConversa(telefone, 'contando_produto', contexto);
+    const enviou = await enviarListaProdutos(telefone, produtos, temMais, contexto.categoriaTitulo);
+    if (enviou) await setConversa(telefone, 'contando_produto', contexto);
     return;
   }
   if (id === 'trocar_categoria') {
@@ -300,15 +312,17 @@ async function chamarGraphAPI(payload) {
   });
   if (!resposta.ok) {
     console.error(`[whatsapp] Graph API erro ${resposta.status}:`, await resposta.text());
+    return false;
   }
+  return true;
 }
 
 async function enviarTexto(telefone, texto) {
-  await chamarGraphAPI({ messaging_product: 'whatsapp', to: telefone, type: 'text', text: { body: texto } });
+  return chamarGraphAPI({ messaging_product: 'whatsapp', to: telefone, type: 'text', text: { body: texto } });
 }
 
 async function enviarBotoesCategoria(telefone) {
-  await chamarGraphAPI({
+  return chamarGraphAPI({
     messaging_product: 'whatsapp',
     to: telefone,
     type: 'interactive',
@@ -321,7 +335,7 @@ async function enviarBotoesCategoria(telefone) {
 }
 
 async function enviarBotoesPosItem(telefone) {
-  await chamarGraphAPI({
+  return chamarGraphAPI({
     messaging_product: 'whatsapp',
     to: telefone,
     type: 'interactive',
@@ -343,7 +357,7 @@ async function enviarListaProdutos(telefone, produtos, temMais, categoriaTitulo)
   const rows = produtos.map((p) => ({ id: `produto_${p.id}`, title: p.nome.slice(0, 24) }));
   if (temMais) rows.push({ id: 'mais_produtos', title: 'Ver mais itens ➜' });
 
-  await chamarGraphAPI({
+  return chamarGraphAPI({
     messaging_product: 'whatsapp',
     to: telefone,
     type: 'interactive',
