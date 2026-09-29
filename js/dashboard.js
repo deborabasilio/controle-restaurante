@@ -1,7 +1,6 @@
 const SUPABASE_URL = 'https://otdwyajhwgenykjdeynv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_KhvLPkG-7NYLRlEFUhnkJw_-HEFJN1g';
 
-
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CATEGORIAS = [
@@ -511,12 +510,16 @@ function cardItemPedido(item) {
     </div>`;
   }
 
-  const preenchido = item.quantidade || item.quantidade_sugerida || '';
+  const preenchido = usaPacote
+    ? (item.quantidade != null ? item.quantidade / p.unidades_por_pacote : (item.quantidade_sugerida != null ? item.quantidade_sugerida / p.unidades_por_pacote : ''))
+    : (item.quantidade ?? item.quantidade_sugerida ?? '');
+  const rotuloCampo = usaPacote ? 'Quantidade a comprar (pacotes)' : `Quantidade a comprar (${esc(p.unidade)})`;
+
   return `<div class="produto-card">${cabecalho}
     <div class="campos-produto">
       <div class="campo-mini cheio">
-        <label>Quantidade a comprar (${esc(p.unidade)})</label>
-        <input type="number" min="0" step="1" inputmode="numeric" value="${preenchido}" data-qtd="${item.id}">
+        <label>${rotuloCampo}</label>
+        <input type="number" min="0" step="1" inputmode="numeric" value="${preenchido}" data-qtd="${item.id}" data-pacote-produto="${usaPacote ? p.unidades_por_pacote : ''}">
       </div>
     </div>
     <button class="salvar-produto" data-comprar="${item.id}">Marcar como comprado</button>
@@ -529,10 +532,9 @@ async function marcarComprado(btn) {
   const item = itensPedidoAtual.find((i) => i.id === id);
   const input = document.querySelector(`[data-qtd="${id}"]`);
   const msg = document.querySelector(`[data-msg="${id}"]`);
-  const quantidade = parseFloat(input.value);
+  const valorDigitado = parseFloat(input.value);
 
-  // O banco recusa entrada de estoque com quantidade zero, então barra aqui com uma mensagem clara
-  if (isNaN(quantidade) || quantidade <= 0) {
+  if (isNaN(valorDigitado) || valorDigitado <= 0) {
     msg.textContent = 'Informe a quantidade comprada (maior que zero).';
     input.focus();
     return;
@@ -540,8 +542,15 @@ async function marcarComprado(btn) {
   msg.textContent = '';
 
   const p = item.produtos;
+  const unidadesPorPacote = parseFloat(input.dataset.pacoteProduto) || null;
+  // O estoque é sempre contado em unidades; a tela só mostra em pacotes quando faz sentido
+  const quantidade = unidadesPorPacote ? valorDigitado * unidadesPorPacote : valorDigitado;
+  const textoConfirmacao = unidadesPorPacote
+    ? `${valorDigitado} pacote(s) (${quantidade} ${p.unidade})`
+    : `${quantidade} ${p.unidade}`;
+
   const confirmou = window.confirm(
-    `Confirmar a compra de ${quantidade} ${p.unidade} de ${p.nome}?\n\nIsso dá entrada no estoque e não dá pra desfazer por aqui.`
+    `Confirmar a compra de ${textoConfirmacao} de ${p.nome}?\n\nIsso dá entrada no estoque e não dá pra desfazer por aqui.`
   );
   if (!confirmou) return;
 
@@ -592,10 +601,14 @@ document.getElementById('copiar-pedido').addEventListener('click', async (e) => 
 
   itensPedidoAtual.filter((i) => precisaPedir(i) && !i.comprado).forEach((item) => {
     const input = document.querySelector(`[data-qtd="${item.id}"]`);
-    const quantidade = input ? parseFloat(input.value) : NaN;
-    if (isNaN(quantidade) || quantidade <= 0) return;
+    const valorDigitado = input ? parseFloat(input.value) : NaN;
+    if (isNaN(valorDigitado) || valorDigitado <= 0) return;
+    const unidadesPorPacote = input ? parseFloat(input.dataset.pacoteProduto) || null : null;
+    const texto = unidadesPorPacote
+      ? `${item.produtos.nome} ${valorDigitado}` // formato "pepsi 5" (pacotes)
+      : `${item.produtos.nome}: ${valorDigitado} ${item.produtos.unidade}`;
     const cat = item.produtos.categoria;
-    (porCategoria[cat] = porCategoria[cat] || []).push(`• ${item.produtos.nome}: ${quantidade} ${item.produtos.unidade}`);
+    (porCategoria[cat] = porCategoria[cat] || []).push(`• ${texto}`);
   });
 
   const blocos = Object.keys(porCategoria)
