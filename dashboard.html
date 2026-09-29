@@ -42,6 +42,7 @@
     Alertas de estoque
     <span class="badge-item" id="badge-alertas" hidden></span>
   </button>
+  <button class="menu-item" data-view="pedido">Pedido da semana</button>
   <button class="menu-item" data-view="produtos">Produtos</button>
   <button class="menu-item" data-view="meus-dados">Meus dados</button>
   <button class="menu-item" data-view="convidar" id="menu-convidar">Convidar usuário</button>
@@ -55,6 +56,27 @@
     <div id="alertas">
       <p class="carregando">Carregando…</p>
     </div>
+  </section>
+
+  <section class="view" id="view-pedido">
+    <h2>Pedido da semana</h2>
+
+    <div class="campo-mini cheio" id="seletor-pedido-wrap" hidden>
+      <label for="seletor-pedido">Contagem</label>
+      <select id="seletor-pedido"></select>
+    </div>
+
+    <p class="resumo-pedido" id="resumo-pedido"></p>
+    <button class="botao-copiar" id="copiar-pedido" hidden>Copiar lista pra enviar</button>
+
+    <div class="lista-produtos" id="lista-pedido">
+      <p class="carregando">Carregando…</p>
+    </div>
+
+    <details class="sem-necessidade" id="sem-necessidade" hidden>
+      <summary id="sem-necessidade-titulo"></summary>
+      <ul id="lista-sem-necessidade"></ul>
+    </details>
   </section>
 
   <section class="view" id="view-produtos">
@@ -150,11 +172,11 @@
       <div class="campos-produto">
         <div class="campo-mini">
           <label>Nome</label>
-          <input type="text" id="convite-nome">
+          <input type="text" id="convite-nome" required>
         </div>
         <div class="campo-mini">
           <label>Papel</label>
-          <select id="convite-papel">
+          <select id="convite-papel" required>
             <option value="funcionario">Funcionário</option>
             <option value="gestor">Gestor</option>
           </select>
@@ -163,11 +185,11 @@
       <div class="campos-produto" style="margin-top: 10px;">
         <div class="campo-mini">
           <label>E-mail</label>
-          <input type="email" id="convite-email">
+          <input type="email" id="convite-email" required>
         </div>
         <div class="campo-mini">
-          <label>WhatsApp (opcional)</label>
-          <input type="tel" id="convite-telefone" placeholder="5544999999999">
+          <label>WhatsApp</label>
+          <input type="tel" id="convite-telefone" placeholder="5544999999999" required>
         </div>
       </div>
       <button class="salvar-produto" id="enviar-convite">Enviar convite</button>

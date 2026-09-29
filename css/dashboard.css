@@ -323,3 +323,41 @@ main > h2:first-child { margin-top: 8px; }
 .mensagem-form { font-size: 13px; margin-top: 10px; min-height: 18px; }
 .mensagem-form.erro { color: #ff8a8a; }
 .mensagem-form.ok { color: #7bc46b; }
+
+/* Pedido da semana */
+.resumo-pedido { font-size: 13px; color: var(--cinza); margin: 12px 0; line-height: 1.5; }
+
+.botao-copiar {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 14px;
+  background: transparent;
+  border: 1px solid var(--branco);
+  color: var(--branco);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+.botao-copiar:hover { background: var(--branco); color: var(--preto); }
+
+.tag-alerta {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: var(--vermelho);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.produto-card.comprado { border-left: 4px solid #2b5c22; }
+.selo-comprado { color: #7bc46b; font-size: 13px; font-weight: 600; margin-top: 4px; }
+
+.sem-necessidade { margin-top: 18px; color: var(--cinza); font-size: 13px; }
+.sem-necessidade summary { cursor: pointer; padding: 8px 0; }
+.sem-necessidade ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.7; }
