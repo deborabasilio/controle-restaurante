@@ -198,7 +198,7 @@ async function finalizarContagem(telefone, contexto) {
   const produtoIds = itens.map((i) => i.produto_id);
   const { data: produtos } = await supabase
     .from('produtos')
-    .select('id, nome, media_semanal, quantidade_alerta, unidade')
+    .select('id, nome, categoria, media_semanal, quantidade_alerta, unidade, unidades_por_pacote')
     .in('id', produtoIds);
 
   const { data: pedido } = await supabase
@@ -214,21 +214,35 @@ async function finalizarContagem(telefone, contexto) {
     const produto = produtos.find((p) => p.id === item.produto_id);
     if (!produto) continue;
 
-    const sugerida = produto.media_semanal != null
-      ? Math.max(produto.media_semanal - item.quantidade_contada, 0)
-      : null;
+    const usaPacote = produto.categoria !== 'vinho' && produto.unidades_por_pacote != null && produto.unidades_por_pacote > 0;
+
+    let sugeridaUnidades = null;
+    let textoSugestao = '';
+
+    if (usaPacote && produto.media_semanal != null) {
+      const pacotesEmEstoque = Math.floor(item.quantidade_contada / produto.unidades_por_pacote);
+      const pacotesAPedir = Math.max(produto.media_semanal - pacotesEmEstoque, 0);
+      sugeridaUnidades = pacotesAPedir * produto.unidades_por_pacote; // guardado em unidades, pra bater com o estoque
+      if (pacotesAPedir > 0) {
+        textoSugestao = `${produto.nome} ${pacotesAPedir}`; // formato pedido: "pepsi 5" (em pacotes)
+      }
+    } else if (produto.media_semanal != null) {
+      // vinho, ou produto sem unidades_por_pacote ainda configurado: segue em unidades/garrafas
+      sugeridaUnidades = Math.max(produto.media_semanal - item.quantidade_contada, 0);
+      if (sugeridaUnidades > 0) {
+        textoSugestao = `${produto.nome}: pedir ${sugeridaUnidades} ${produto.unidade}`;
+      }
+    }
 
     await supabase.from('itens_pedido').insert({
       pedido_id: pedido.id,
       produto_id: produto.id,
       quantidade_contada: item.quantidade_contada,
-      quantidade_sugerida: sugerida,
-      quantidade: sugerida,
+      quantidade_sugerida: sugeridaUnidades,
+      quantidade: sugeridaUnidades,
     });
 
-    if (sugerida != null && sugerida > 0) {
-      linhasPedido.push(`• ${produto.nome}: pedir ${sugerida} ${produto.unidade} (contou ${item.quantidade_contada})`);
-    }
+    if (textoSugestao) linhasPedido.push(`• ${textoSugestao}`);
     if (produto.quantidade_alerta != null && item.quantidade_contada <= produto.quantidade_alerta) {
       linhasAlerta.push(`⚠️ ${produto.nome}: só ${item.quantidade_contada} ${produto.unidade} em estoque`);
     }

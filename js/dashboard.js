@@ -1,6 +1,7 @@
 const SUPABASE_URL = 'https://otdwyajhwgenykjdeynv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_KhvLPkG-7NYLRlEFUhnkJw_-HEFJN1g';
 
+
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CATEGORIAS = [
@@ -83,7 +84,7 @@ function atualizarBadges(qtd) {
 async function carregarProdutos() {
   const { data, error } = await supabaseClient
     .from('produtos')
-    .select('id, nome, codigo_interno, categoria, unidade, quantidade_estoque, media_semanal, quantidade_alerta')
+    .select('id, nome, codigo_interno, categoria, unidade, unidades_por_pacote, quantidade_estoque, media_semanal, quantidade_alerta')
     .eq('ativo', true)
     .order('nome');
 
@@ -161,8 +162,16 @@ function desenharListaProdutos() {
   }
 
   container.innerHTML = itens
-    .map(
-      (p) => `
+    .map((p) => {
+      const usaPacote = p.categoria !== 'vinho';
+      const rotuloMedia = usaPacote ? 'Média semanal (pacotes)' : 'Média semanal (garrafas)';
+      const campoPacote = usaPacote ? `
+        <div class="campo-mini">
+          <label>Unid. por pacote</label>
+          <input type="number" step="1" min="1" value="${p.unidades_por_pacote ?? ''}" data-pacote="${p.id}" placeholder="ex: 12">
+        </div>` : '';
+
+      return `
     <div class="produto-card">
       <div class="topo">
         <span class="nome">${p.nome}</span>
@@ -171,17 +180,18 @@ function desenharListaProdutos() {
       <div class="estoque-atual">Estoque atual: ${p.quantidade_estoque} ${p.unidade}</div>
       <div class="campos-produto">
         <div class="campo-mini">
-          <label>Média semanal</label>
+          <label>${rotuloMedia}</label>
           <input type="number" step="1" min="0" value="${p.media_semanal ?? ''}" data-media="${p.id}" placeholder="—">
         </div>
         <div class="campo-mini">
-          <label>Alerta em</label>
+          <label>Alerta em (unidades)</label>
           <input type="number" step="1" min="0" value="${p.quantidade_alerta ?? ''}" data-alerta="${p.id}" placeholder="—">
         </div>
+        ${campoPacote}
       </div>
       <button class="salvar-produto" data-salvar="${p.id}">Salvar</button>
-    </div>`
-    )
+    </div>`;
+    })
     .join('');
 
   container.querySelectorAll('[data-salvar]').forEach((btn) => {
@@ -189,10 +199,15 @@ function desenharListaProdutos() {
       const id = btn.dataset.salvar;
       const media = container.querySelector(`[data-media="${id}"]`).value;
       const alerta = container.querySelector(`[data-alerta="${id}"]`).value;
-      await salvarProduto(id, {
+      const campoPacoteEl = container.querySelector(`[data-pacote="${id}"]`);
+      const campos = {
         media_semanal: media === '' ? null : parseFloat(media),
         quantidade_alerta: alerta === '' ? null : parseFloat(alerta),
-      });
+      };
+      if (campoPacoteEl) {
+        campos.unidades_por_pacote = campoPacoteEl.value === '' ? null : parseFloat(campoPacoteEl.value);
+      }
+      await salvarProduto(id, campos);
       btn.textContent = 'Salvo ✓';
       btn.classList.add('salvo');
       setTimeout(() => { btn.textContent = 'Salvar'; btn.classList.remove('salvo'); }, 1500);
@@ -286,7 +301,7 @@ function mostrarMensagemNovo(texto, tipo) {
 }
 
 function limparFormNovo() {
-  ['novo-nome', 'novo-codigo', 'novo-estoque', 'novo-media', 'novo-alerta'].forEach((id) => {
+  ['novo-nome', 'novo-codigo', 'novo-estoque', 'novo-media', 'novo-alerta', 'novo-pacote'].forEach((id) => {
     document.getElementById(id).value = '';
   });
   document.getElementById('novo-unidade').value = 'un';
@@ -330,6 +345,7 @@ document.getElementById('salvar-novo-produto').addEventListener('click', async (
     quantidade_estoque: numeroOuNulo(document.getElementById('novo-estoque').value) ?? 0,
     media_semanal: numeroOuNulo(document.getElementById('novo-media').value),
     quantidade_alerta: numeroOuNulo(document.getElementById('novo-alerta').value),
+    unidades_por_pacote: numeroOuNulo(document.getElementById('novo-pacote').value),
   };
 
   mostrarMensagemNovo('Salvando…');
@@ -429,7 +445,7 @@ async function desenharPedido(pedidoId) {
   const container = document.getElementById('lista-pedido');
   const { data, error } = await supabaseClient
     .from('itens_pedido')
-    .select('id, quantidade_contada, quantidade_sugerida, quantidade, comprado, comprado_em, produtos(id, nome, unidade, categoria, codigo_interno, quantidade_alerta)')
+    .select('id, quantidade_contada, quantidade_sugerida, quantidade, comprado, comprado_em, produtos(id, nome, unidade, categoria, codigo_interno, quantidade_alerta, unidades_por_pacote)')
     .eq('pedido_id', pedidoId);
 
   if (error) {
@@ -472,9 +488,14 @@ async function desenharPedido(pedidoId) {
 function cardItemPedido(item) {
   const p = item.produtos;
   const tag = itemEmAlerta(item) ? '<span class="tag-alerta">ALERTA</span>' : '';
-  const sugestao = item.quantidade_sugerida != null
-    ? ` · Sugerido: ${item.quantidade_sugerida} ${esc(p.unidade)}`
-    : ' · Sem média definida';
+  const usaPacote = p.categoria !== 'vinho' && p.unidades_por_pacote;
+
+  let sugestao = ' · Sem média definida';
+  if (item.quantidade_sugerida != null) {
+    sugestao = usaPacote
+      ? ` · Sugerido: ${item.quantidade_sugerida / p.unidades_por_pacote} pacote(s) (${item.quantidade_sugerida} ${esc(p.unidade)})`
+      : ` · Sugerido: ${item.quantidade_sugerida} ${esc(p.unidade)}`;
+  }
 
   const cabecalho = `
     <div class="topo">
