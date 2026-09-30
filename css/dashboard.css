@@ -361,4 +361,4 @@ main > h2:first-child { margin-top: 8px; }
 .sem-necessidade { margin-top: 18px; color: var(--cinza); font-size: 13px; }
 .sem-necessidade summary { cursor: pointer; padding: 8px 0; }
 .sem-necessidade ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.7; }
-.dica-form { font-size: 12px; color: var(--cinza); margin: -4px 0 10px; }
+.dica-form { font-size: 12px; color: var(--cinza); margin: -4px 0 10px; }.espaco-topo { margin-top: 10px; }
