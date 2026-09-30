@@ -224,13 +224,13 @@ async function finalizarContagem(telefone, contexto) {
       const pacotesAPedir = Math.max(produto.media_semanal - pacotesEmEstoque, 0);
       sugeridaUnidades = pacotesAPedir * produto.unidades_por_pacote; // guardado em unidades, pra bater com o estoque
       if (pacotesAPedir > 0) {
-        textoSugestao = `${produto.nome} ${pacotesAPedir}`; // formato pedido: "pepsi 5" (em pacotes)
+        textoSugestao = `${produto.nome} ${pacotesAPedir} pac`; // ex: "Pepsi 5 pac"
       }
     } else if (produto.media_semanal != null) {
       // vinho, ou produto sem unidades_por_pacote ainda configurado: segue em unidades/garrafas
       sugeridaUnidades = Math.max(produto.media_semanal - item.quantidade_contada, 0);
       if (sugeridaUnidades > 0) {
-        textoSugestao = `${produto.nome}: pedir ${sugeridaUnidades} ${produto.unidade}`;
+        textoSugestao = `${produto.nome} ${sugeridaUnidades} un`; // ex: "Crios Malbec 3 un"
       }
     }
 
@@ -242,7 +242,7 @@ async function finalizarContagem(telefone, contexto) {
       quantidade: sugeridaUnidades,
     });
 
-    if (textoSugestao) linhasPedido.push(`• ${textoSugestao}`);
+    if (textoSugestao) linhasPedido.push(textoSugestao);
     if (produto.quantidade_alerta != null && item.quantidade_contada <= produto.quantidade_alerta) {
       linhasAlerta.push(`⚠️ ${produto.nome}: só ${item.quantidade_contada} ${produto.unidade} em estoque`);
     }

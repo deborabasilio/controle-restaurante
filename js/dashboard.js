@@ -1,3 +1,4 @@
+
 const SUPABASE_URL = 'https://otdwyajhwgenykjdeynv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_KhvLPkG-7NYLRlEFUhnkJw_-HEFJN1g';
 
@@ -605,10 +606,10 @@ document.getElementById('copiar-pedido').addEventListener('click', async (e) => 
     if (isNaN(valorDigitado) || valorDigitado <= 0) return;
     const unidadesPorPacote = input ? parseFloat(input.dataset.pacoteProduto) || null : null;
     const texto = unidadesPorPacote
-      ? `${item.produtos.nome} ${valorDigitado}` // formato "pepsi 5" (pacotes)
-      : `${item.produtos.nome}: ${valorDigitado} ${item.produtos.unidade}`;
+      ? `${item.produtos.nome} ${valorDigitado} pac`
+      : `${item.produtos.nome} ${valorDigitado} un`;
     const cat = item.produtos.categoria;
-    (porCategoria[cat] = porCategoria[cat] || []).push(`• ${texto}`);
+    (porCategoria[cat] = porCategoria[cat] || []).push(texto);
   });
 
   const blocos = Object.keys(porCategoria)
