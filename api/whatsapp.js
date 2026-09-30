@@ -68,6 +68,12 @@ function extrairTexto(message) {
 // Máquina de estados
 // ============================================================
 async function processarMensagem(telefone, texto) {
+  const responsavel = await getResponsavel(telefone);
+  if (!responsavel) {
+    await enviarTexto(telefone, 'Esse número ainda não está liberado pra usar o sistema. Fala com o gestor da loja pra ser cadastrado.');
+    return;
+  }
+
   const t = texto.toLowerCase().trim();
   if (['cancelar', 'menu', 'sair', 'reiniciar', 'voltar'].includes(t)) {
     await resetConversa(telefone);
@@ -151,7 +157,7 @@ async function tratarQuantidade(telefone, texto, contexto) {
     return;
   }
 
-  const responsavel = await getOuCriarResponsavel(telefone);
+  const responsavel = await getResponsavel(telefone);
   await supabase.from('contagens_estoque').insert({
     produto_id: contexto.produto_atual,
     quantidade_contada: quantidade,
@@ -194,7 +200,7 @@ async function finalizarContagem(telefone, contexto) {
     return;
   }
 
-  const responsavel = await getOuCriarResponsavel(telefone);
+  const responsavel = await getResponsavel(telefone);
   const produtoIds = itens.map((i) => i.produto_id);
   const { data: produtos } = await supabase
     .from('produtos')
@@ -308,11 +314,14 @@ async function buscarProdutosPorCategoria(categoria, offset) {
   return { produtos, temMais };
 }
 
-async function getOuCriarResponsavel(telefone) {
-  const { data: existente } = await supabase.from('responsaveis').select('*').eq('telefone', telefone).maybeSingle();
-  if (existente) return existente;
-  const { data: novo } = await supabase.from('responsaveis').insert({ telefone }).select().single();
-  return novo;
+async function getResponsavel(telefone) {
+  const { data } = await supabase
+    .from('responsaveis')
+    .select('*')
+    .eq('telefone', telefone)
+    .eq('ativo', true)
+    .maybeSingle();
+  return data;
 }
 
 // ============================================================

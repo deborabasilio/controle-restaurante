@@ -1,4 +1,3 @@
-
 const SUPABASE_URL = 'https://otdwyajhwgenykjdeynv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_KhvLPkG-7NYLRlEFUhnkJw_-HEFJN1g';
 
@@ -25,6 +24,7 @@ async function iniciar() {
   await carregarProdutos();
   await carregarMeusDados(data.session);
   await carregarPedidos();
+  await carregarResponsaveis();
 }
 
 document.getElementById('sair').addEventListener('click', async () => {
@@ -61,6 +61,7 @@ function mostrarView(nome) {
   // Recarrega pra pegar contagens novas que chegaram enquanto a página estava aberta
   if (nome === 'pedido') carregarPedidos();
   if (nome === 'alertas') carregarProdutos();
+  if (nome === 'responsaveis') carregarResponsaveis();
 }
 
 botaoAbrir.addEventListener('click', abrirMenu);
@@ -624,6 +625,96 @@ document.getElementById('copiar-pedido').addEventListener('click', async (e) => 
     btn.textContent = 'Copiado ✓';
   }
   setTimeout(() => { btn.textContent = original; }, 1800);
+});
+
+// ------------------------------------------------------------
+// Responsáveis (números autorizados a usar o bot)
+// ------------------------------------------------------------
+async function carregarResponsaveis() {
+  const container = document.getElementById('lista-responsaveis');
+  const { data, error } = await supabaseClient
+    .from('responsaveis')
+    .select('id, nome, telefone, ativo')
+    .order('nome');
+
+  if (error) {
+    container.innerHTML = `<p class="sem-alerta">Erro ao carregar: ${esc(error.message)}</p>`;
+    return;
+  }
+
+  const responsaveis = data || [];
+  if (responsaveis.length === 0) {
+    container.innerHTML = '<p class="sem-alerta">Nenhum responsável cadastrado ainda. Sem isso, ninguém consegue usar o bot.</p>';
+    return;
+  }
+
+  container.innerHTML = responsaveis
+    .map((r) => `
+      <div class="produto-card">
+        <div class="topo">
+          <span class="nome">${esc(r.nome || '(sem nome)')}<span class="status-responsavel ${r.ativo ? 'ativo' : 'inativo'}">${r.ativo ? 'Ativo' : 'Inativo'}</span></span>
+        </div>
+        <div class="estoque-atual">${esc(r.telefone)}</div>
+        <button class="toggle-responsavel" data-toggle="${r.id}" data-ativo="${r.ativo}">
+          ${r.ativo ? 'Desativar' : 'Ativar'}
+        </button>
+      </div>`)
+    .join('');
+
+  container.querySelectorAll('[data-toggle]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.toggle;
+      const ativoAtual = btn.dataset.ativo === 'true';
+      await supabaseClient.from('responsaveis').update({ ativo: !ativoAtual }).eq('id', id);
+      await carregarResponsaveis();
+    });
+  });
+}
+
+const formNovoResp = document.getElementById('form-novo-responsavel');
+const botaoAbrirResp = document.getElementById('abrir-novo-responsavel');
+const mensagemResp = document.getElementById('resp-mensagem');
+
+document.getElementById('abrir-novo-responsavel').addEventListener('click', () => {
+  document.getElementById('resp-nome').value = '';
+  document.getElementById('resp-telefone').value = '';
+  mensagemResp.textContent = '';
+  mensagemResp.className = 'mensagem-form';
+  formNovoResp.hidden = false;
+  botaoAbrirResp.hidden = true;
+  document.getElementById('resp-nome').focus();
+});
+
+document.getElementById('cancelar-novo-responsavel').addEventListener('click', () => {
+  formNovoResp.hidden = true;
+  botaoAbrirResp.hidden = false;
+});
+
+document.getElementById('salvar-novo-responsavel').addEventListener('click', async () => {
+  const nome = document.getElementById('resp-nome').value.trim();
+  const telefone = document.getElementById('resp-telefone').value.replace(/\D/g, '');
+
+  if (!telefone) {
+    mensagemResp.textContent = 'Informe o WhatsApp (só números, com DDI+DDD).';
+    mensagemResp.className = 'mensagem-form erro';
+    return;
+  }
+
+  mensagemResp.textContent = 'Salvando…';
+  mensagemResp.className = 'mensagem-form';
+
+  const { error } = await supabaseClient.from('responsaveis').insert({ nome: nome || null, telefone, ativo: true });
+
+  if (error) {
+    const texto = error.code === '23505' ? 'Esse número já está cadastrado.' : 'Erro ao salvar: ' + error.message;
+    mensagemResp.textContent = texto;
+    mensagemResp.className = 'mensagem-form erro';
+    return;
+  }
+
+  formNovoResp.hidden = true;
+  botaoAbrirResp.hidden = false;
+  await carregarResponsaveis();
 });
 
 iniciar();

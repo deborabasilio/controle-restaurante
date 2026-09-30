@@ -44,6 +44,7 @@
   </button>
   <button class="menu-item" data-view="pedido">Pedido da semana</button>
   <button class="menu-item" data-view="produtos">Produtos</button>
+  <button class="menu-item" data-view="responsaveis">Responsáveis</button>
   <button class="menu-item" data-view="meus-dados">Meus dados</button>
   <button class="menu-item" data-view="convidar" id="menu-convidar">Convidar usuário</button>
 
@@ -150,6 +151,36 @@
 
     <div class="tabs-categoria" id="tabs-categoria"></div>
     <div class="lista-produtos" id="lista-produtos">
+      <p class="carregando">Carregando…</p>
+    </div>
+  </section>
+
+  <section class="view" id="view-responsaveis">
+    <h2>Responsáveis</h2>
+    <p class="resumo-pedido">Só números cadastrados e ativos aqui conseguem usar o bot do WhatsApp.</p>
+
+    <button class="botao-adicionar" id="abrir-novo-responsavel">+ Adicionar responsável</button>
+
+    <div class="produto-card form-novo" id="form-novo-responsavel" hidden>
+      <div class="titulo-form">Novo responsável</div>
+      <div class="campos-produto">
+        <div class="campo-mini">
+          <label for="resp-nome">Nome</label>
+          <input type="text" id="resp-nome" autocomplete="off">
+        </div>
+        <div class="campo-mini">
+          <label for="resp-telefone">WhatsApp</label>
+          <input type="tel" id="resp-telefone" placeholder="5544999999999">
+        </div>
+      </div>
+      <div class="acoes-form">
+        <button class="secundario" id="cancelar-novo-responsavel" type="button">Cancelar</button>
+        <button class="primario" id="salvar-novo-responsavel" type="button">Salvar</button>
+      </div>
+      <p class="mensagem-form" id="resp-mensagem"></p>
+    </div>
+
+    <div class="lista-produtos" id="lista-responsaveis">
       <p class="carregando">Carregando…</p>
     </div>
   </section>

@@ -362,3 +362,32 @@ main > h2:first-child { margin-top: 8px; }
 .sem-necessidade summary { cursor: pointer; padding: 8px 0; }
 .sem-necessidade ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.7; }
 .dica-form { font-size: 12px; color: var(--cinza); margin: -4px 0 10px; }.espaco-topo { margin-top: 10px; }
+
+/* Responsáveis */
+.status-responsavel {
+  display: inline-block;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.status-responsavel.ativo { background: #2b5c22; color: #fff; }
+.status-responsavel.inativo { background: var(--linha); color: var(--cinza); }
+
+.toggle-responsavel {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid var(--linha);
+  color: var(--branco);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+.toggle-responsavel:hover { border-color: var(--vermelho); }
