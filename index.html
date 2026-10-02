@@ -23,11 +23,6 @@
     <h1>Controle de bebidas</h1>
     <p class="subtitulo">Acesso restrito ao gestor</p>
 
-    <div class="tabs">
-      <button class="tab ativa" data-tab="entrar">Entrar</button>
-      <button class="tab" data-tab="criar">Criar conta</button>
-    </div>
-
     <form id="form-entrar" class="ativa">
       <div class="campo">
         <label for="entrar-email">E-mail</label>
@@ -38,27 +33,6 @@
         <input id="entrar-senha" type="password" required autocomplete="current-password">
       </div>
       <button class="entrar" type="submit">Entrar</button>
-    </form>
-
-    <form id="form-criar">
-      <div class="campo">
-        <label for="criar-nome">Seu nome</label>
-        <input id="criar-nome" type="text" required>
-      </div>
-      <div class="campo">
-        <label for="criar-telefone">WhatsApp (com DDD)</label>
-        <input id="criar-telefone" type="tel" placeholder="5544999999999" required>
-        <span class="dica">É pra esse número que os pedidos calculados vão chegar.</span>
-      </div>
-      <div class="campo">
-        <label for="criar-email">E-mail</label>
-        <input id="criar-email" type="email" required autocomplete="email">
-      </div>
-      <div class="campo">
-        <label for="criar-senha">Senha</label>
-        <input id="criar-senha" type="password" required minlength="6" autocomplete="new-password">
-      </div>
-      <button class="entrar" type="submit">Criar conta de gestor</button>
     </form>
 
     <div id="mensagem" class="mensagem"></div>

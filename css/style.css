@@ -88,31 +88,6 @@ h1 {
   margin: 0 0 26px;
 }
 
-.tabs {
-  display: flex;
-  border: 1px solid #d8d5ca;
-  margin-bottom: 24px;
-}
-.tab {
-  flex: 1;
-  text-align: center;
-  padding: 12px 10px;
-  min-height: 44px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  border: none;
-  color: #55534c;
-  font-family: inherit;
-  -webkit-appearance: none;
-  appearance: none;
-}
-.tab.ativa {
-  background: var(--preto);
-  color: var(--branco);
-}
-
 form { display: none; flex-direction: column; gap: 14px; }
 form.ativa { display: flex; }
 
@@ -141,12 +116,6 @@ input:focus {
 }
 
 .campo { display: flex; flex-direction: column; gap: 6px; }
-
-.dica {
-  font-size: 12px;
-  color: var(--cinza);
-  margin-top: -4px;
-}
 
 button.entrar {
   margin-top: 6px;

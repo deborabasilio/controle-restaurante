@@ -6,23 +6,12 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 // Se já existe uma sessão salva (login anterior), pula direto pro dashboard
 supabaseClient.auth.getSession().then(({ data }) => {
   if (data.session) {
-    window.location.href = '/dashboard.html';
+    window.location.href = 'dashboard.html';
   }
 });
 
-const tabs = document.querySelectorAll('.tab');
-const forms = { entrar: document.getElementById('form-entrar'), criar: document.getElementById('form-criar') };
+const formEntrar = document.getElementById('form-entrar');
 const mensagem = document.getElementById('mensagem');
-
-tabs.forEach((tab) => {
-  tab.addEventListener('click', () => {
-    tabs.forEach((t) => t.classList.remove('ativa'));
-    tab.classList.add('ativa');
-    Object.values(forms).forEach((f) => f.classList.remove('ativa'));
-    forms[tab.dataset.tab].classList.add('ativa');
-    esconderMensagem();
-  });
-});
 
 function mostrarMensagem(texto, tipo) {
   mensagem.textContent = texto;
@@ -32,7 +21,7 @@ function esconderMensagem() {
   mensagem.className = 'mensagem';
 }
 
-forms.entrar.addEventListener('submit', async (e) => {
+formEntrar.addEventListener('submit', async (e) => {
   e.preventDefault();
   esconderMensagem();
   const email = document.getElementById('entrar-email').value;
@@ -43,26 +32,5 @@ forms.entrar.addEventListener('submit', async (e) => {
     mostrarMensagem('E-mail ou senha incorretos.', 'erro');
     return;
   }
-  window.location.href = '/dashboard.html';
-});
-
-forms.criar.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  esconderMensagem();
-  const nome = document.getElementById('criar-nome').value;
-  const telefone = document.getElementById('criar-telefone').value.replace(/\D/g, '');
-  const email = document.getElementById('criar-email').value;
-  const senha = document.getElementById('criar-senha').value;
-
-  const { error } = await supabaseClient.auth.signUp({
-    email,
-    password: senha,
-    options: { data: { nome, papel: 'gestor', telefone_whatsapp: telefone } },
-  });
-
-  if (error) {
-    mostrarMensagem('Não foi possível criar a conta: ' + error.message, 'erro');
-    return;
-  }
-  mostrarMensagem('Conta criada! Verifique seu e-mail para confirmar, depois faça login.', 'sucesso');
+  window.location.href = 'dashboard.html';
 });
