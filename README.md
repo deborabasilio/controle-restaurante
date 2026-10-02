@@ -1,6 +1,6 @@
 # 🐊 Jacaré Vermelho — Controle de Bebidas
 
-Sistema de controle de estoque e pedidos de bebidas para um restaurante. A contagem é feita pelo **WhatsApp** (um bot guia o funcionário item por item), e o gestor acompanha tudo em um **painel web**: alertas de estoque baixo, pedido sugerido da semana e checklist de compra com entrada automática no estoque.
+Sistema de controle de estoque e pedidos de bebidas para o restaurante Jacaré Vermelho. A contagem é feita pelo **WhatsApp** (um bot guia o funcionário item por item), e o gestor acompanha tudo em um **painel web**: alertas de estoque baixo, pedido sugerido da semana e checklist de compra com entrada automática no estoque.
 
 > Uso interno. O acesso ao painel é restrito a usuários convidados e o bot só responde a números previamente autorizados.
 
